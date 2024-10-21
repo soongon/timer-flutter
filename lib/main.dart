@@ -26,14 +26,16 @@ class StopWatch extends StatefulWidget {
 
 class _StopWatchState extends State<StopWatch> {
 
-  int seconds = 0;
+  int milliseconds = 0;
   bool isTicking = true;
+
+  final laps = <int>[];
   late Timer timer;
 
   @override
   void initState() {
     super.initState();
-    timer = Timer.periodic(Duration(seconds: 1), _onTick);
+    timer = Timer.periodic(const Duration(milliseconds: 100), _onTick);
   }
 
   @override
@@ -45,7 +47,7 @@ class _StopWatchState extends State<StopWatch> {
   void _onTick(Timer time) {
     if (mounted && isTicking) {
       setState(() {
-        ++seconds;
+        milliseconds += 100;
       });
     }
   }
@@ -62,7 +64,17 @@ class _StopWatchState extends State<StopWatch> {
     });
   }
 
-  String _secondsText() =>seconds == 1 ? 'second' : 'seconds';
+  void _lap() {
+    setState(() {
+      laps.add(milliseconds);
+      milliseconds = 0;
+    });
+  }
+
+  String _secondsText(int milliseconds) {
+    final seconds = milliseconds / 1000;
+    return '$seconds seconds';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,35 +83,74 @@ class _StopWatchState extends State<StopWatch> {
         title: const Text('Stopwatch'),
       ),
       body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            '$seconds ${_secondsText()}',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 10,),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                style: ButtonStyle(
-                  backgroundColor: WidgetStateProperty.all(Colors.green),
-                  foregroundColor: WidgetStateProperty.all(Colors.white),
-                ),
-                onPressed: _startTimer,
-                child: Text('Start')
-              ),
-              SizedBox(width: 20,),
-              ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.red),
-                    foregroundColor: WidgetStateProperty.all(Colors.white),
+          Expanded(
+            child: Container(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Lap ${laps.length + 1}',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall,
                   ),
-                onPressed: _stopTimer,
-                child: Text('Stop')
+                  Text(
+                    _secondsText(milliseconds),
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 10,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all(Colors.green),
+                          foregroundColor: WidgetStateProperty.all(Colors.white),
+                        ),
+                        onPressed: _startTimer,
+                        child: Text('Start')
+                      ),
+                      SizedBox(width: 20,),
+                      ElevatedButton(
+                        style: ButtonStyle(
+                          backgroundColor: WidgetStateProperty.all(Colors.yellow),
+                          foregroundColor: WidgetStateProperty.all(Colors.white),
+                        ),
+                        onPressed: _lap,
+                        child: Text('Lap')
+                      ),
+                      SizedBox(width: 20,),
+                      ElevatedButton(
+                          style: ButtonStyle(
+                            backgroundColor: WidgetStateProperty.all(Colors.red),
+                            foregroundColor: WidgetStateProperty.all(Colors.white),
+                          ),
+                        onPressed: _stopTimer,
+                        child: Text('Stop')
+                      ),
+            
+                    ],
+                  )
+                ],
               ),
-
-            ],
+            ),
+          ),
+          Expanded(
+            child: Container(
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: ListView(
+                  children: [
+                    for (int milliseconds in laps)
+                      ListTile(
+                        title: Text(_secondsText(milliseconds)),
+                      )
+                  ],
+                ),
+              ),
+            ),
           )
         ],
       )
